@@ -4,7 +4,11 @@ from Tkinter import *
 from wheel_menu_framework import *
 import threading
 from math import *
+from image_factory import *
+import base64
 # from pymitter import EventEmitter
+
+data_count = 0
 
 RENDER_DELAY = 1
 
@@ -68,7 +72,7 @@ class Objects(object):
 	def reundo(self, end_obj_count):
 		obj_count = len(self.data)
 		obj_diff = int(end_obj_count - obj_count)
-		print(obj_diff)
+		#print(obj_diff)
 		if(obj_diff < 0):
 			# Perform Undos
 			for i in range(0, -obj_diff):
@@ -92,7 +96,20 @@ class Objects(object):
 			self.data.append(obj)
 		#print("UNIMPLEMENTED")
 
-class Circle(object):
+class Shape(object):
+	def __init__(self):
+		global data_count
+		print(data_count)
+		super(Shape, self).__init__()
+		self.uid = data_count
+		data_count += 1
+
+	def __eq__(self, other):
+		if(not other == None):
+			return self.uid == other.uid
+		return False
+
+class Circle(Shape):
 	"""docstring for Circle"""
 	def __init__(self, (x, y), radius = 5, color="darkgrey", fillcolor=None):
 		super(Circle, self).__init__()
@@ -101,13 +118,14 @@ class Circle(object):
 		self.color = color
 		self.radius = radius
 		self.fillcolor = fillcolor if fillcolor else color
+		#print(data_count)
 
 	def render(self, canvas):
 		#print("Circle!")
 		# emitter.emit('circle')
 		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillcolor, outline=self.color)
 		
-class Rectangle(object):
+class Rectangle(Shape):
 	"""docstring for Rectangle"""
 	def __init__(self, (x, y), (x2, y2), color="#666", fillcolor=None, width=3.5):
 		super(Rectangle, self).__init__()
@@ -122,7 +140,7 @@ class Rectangle(object):
 	def render(self, canvas):
 		canvas.create_rectangle(self.x, self.y, self.x2, self.y2, fill=self.fillcolor, outline=self.color, width=self.width)
 
-class Line(object):
+class Line(Shape):
 	"""docstring for Line"""
 	def __init__(self, (x, y), (x2, y2), color="#FF0066"):
 		super(Line, self).__init__()
@@ -135,16 +153,38 @@ class Line(object):
 	def render(self, canvas):
 		canvas.create_line(self.x, self.y, self.x2, self.y2, fill=self.color, width=3.5)
 		
-class TextBox(object):
+class Image(Shape):
+	"""docstring for Image"""
+	def __init__(self, (x, y), (x2, y2), url):
+		super(Image, self).__init__()
+		self.x = x
+		self.y = y
+		self.x2 = x2
+		self.y2 = y2
+		self.url = url
+		print(self.url)
+		# Load image
+		u = urllib.urlopen(self.url)
+		raw_data = u.read()
+		u.close()
+		b64_data = base64.encodestring(raw_data)
+		self.image = PhotoImage(data=b64_data, height=int(self.y2-self.y), width=int(self.x2-self.x))
+
+	def render(self, canvas):
+		canvas.create_image(self.x + (self.x2 - self.x)/2, self.y + (self.y2-self.y)/2, image=self.image)
+
+class TextBox(Shape):
 	"""docstring for TextBox"""
-	def __init__(self, (x, y), (x2, y2)):
+	def __init__(self, (x, y), (x2, y2), default_text="Start Typing..", submittable=False):
 		super(TextBox, self).__init__()
 		self.x = x
 		self.y = y
 		self.x2 = x2
 		self.y2 = y2
-		self.text = "Start Typing.."
+		self.text = default_text
+		self.default_text = default_text
 		self.isplaceholder = True
+		self.submittable = submittable
 
 	def addText(self, char):
 		self.text += char
@@ -154,7 +194,7 @@ class TextBox(object):
 		self.text = self.text[0:-1]
 		if(len(self.text) == 0):
 			self.isplaceholder = True
-			self.text = "Start Typing.."
+			self.text = default_text
 
 	def render(self, canvas):
 		self.id = canvas.create_text((self.x + self.x2)/2, (self.y + self.y2)/2, width=(self.x2-self.x))
@@ -217,13 +257,15 @@ class SenselEventLoop(SenselGestureHandler):
 
 				elif(arg.imageType == Action.IMAGE):
 					# Similar to text, open a prompt and fetch image and display
-					pass
+					tb = TextBox(arg.boxselection[0], arg.boxselection[1], "Search Images..", True)
+					arg.data.append(tb) # Will swap with the image later
+					arg.selected_tb = tb
 
 				arg.grid_visible = False # Toggle the grid to hide next time through the render function
 				arg.imageType = None
 				arg.boxselection = [None, None]
 			else:
-				arg.ui_data.append(Rectangle(arg.boxselection[0], arg.boxselection[1], fillcolor="#666"))
+				arg.ui_data.append(Rectangle(arg.boxselection[0], arg.boxselection[1], fillcolor="white", color="#F00996"))
 				
 				arg.ui_data.append(Circle(arg.boxselection[0], color="#CAE5FC", radius=8, fillcolor="white"))
 				arg.ui_data.append(Circle(arg.boxselection[0], color="#91C1FC"))
@@ -304,6 +346,22 @@ class App(object):
 			# If delete key, delete char
 			if(event.keycode == 3342463): # Delete or backspace
 				self.objects.selected_tb.remText()
+			# Check if enter was pressed 
+			elif(self.objects.selected_tb.submittable and event.keycode == 2359309):
+				# Trigger a submit of the search
+				search_term = self.objects.selected_tb.text
+				print(search_term)
+				results = gif_search(search_term)
+				# Find the best result
+				# TODO
+				# Swap the text input for the gif
+				for i in range(0, len(self.objects.data)):
+					if(self.objects.data[len(self.objects.data) - i - 1] == self.objects.selected_tb):
+						image = Image((self.objects.selected_tb.x, self.objects.selected_tb.y), (self.objects.selected_tb.x2, self.objects.selected_tb.y2), url=results['data'][0]['images']['original']['url'])
+						# Swap the text box for the image
+						self.objects.data[len(self.objects.data) - i - 1] = image
+						self.objects.selected_tb = None
+						self.objects.ui_data = []
 			# Add this key to the text for the text box
 			else:
 				self.objects.selected_tb.addText(x)
