@@ -3,13 +3,26 @@ from lib.SenselGestureFramework.sensel_framework_simple import *
 from Tkinter import *
 import wheel_menu_framework
 import threading
+import math *
 # from pymitter import EventEmitter
 
 RENDER_DELAY = 1
 
 SCREEN_WIDTH = 1150
 SCREEN_HEIGHT = 600
+CELLS_HORZ = 32
+CELLS_VERT = 32
 
+def snapLoc (xloc, yloc):
+	newX = math.Round(xLoc/CELLS_HORZ)*CELLS_HORZ
+	newY = math.Round(yLoc/CELLS_VERT)*CELLS_VERT
+	return (newX, newY)
+
+def snapToGrid (xloc, yloc):
+	gridCol = math.Round(xLoc/CELLS_HORZ)
+	gridRow = math.Round(yLoc/CELLS_VERT)
+	return (gridRow, gridCol)
+	
 class Objects(object):
 	"""Objects that will need to be rendered"""
 	def __init__(self):
