@@ -335,7 +335,7 @@ class SenselEventLoop(SenselGestureHandler):
 		if(gesture.contact_points >= 6):
 			print("DEPLOYING!")
 			elements = arg.getElements()
-			path = "~/index.html"
+			path = "/Users/bgm9103/Desktop/index.html"
 			grid_size = 94
 			convertHTML(elements, grid_size, path)
 			# On completion, push html file to AWS

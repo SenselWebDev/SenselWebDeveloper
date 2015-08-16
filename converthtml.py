@@ -18,7 +18,7 @@ def create_html(grid_size, css_properties, body):
 
 	x = ""
 	for i in range(0, X_DIMENSION):
-		x += (grid_size + 'px ')
+		x += (str(grid_size) + 'px ')
 	x += ';' 
 
 	w += x
@@ -26,13 +26,14 @@ def create_html(grid_size, css_properties, body):
 
 	y = ""
 	for i in range(0, Y_DIMENSION):
-		y += (grid_size + 'px ')
+		y += (str(grid_size) + 'px ')
 	y += ';}' 
 
 	w += y
+	w += css_properties
 	w += '</style></header>'
 
-	return w + css_properties + body
+	return w + body
 
 def get_css_properties(elements):
 	element_property = ''
@@ -55,7 +56,7 @@ def get_body(elements):
 
 	for element in elements:
 		if element.state == 'img':
-			body += generate_element(element.name, generate_element(element.name, '', 'img', 'src="' + element.content + '" style="width: 100%;'), 'div', 'style="overflow: hidden;"')
+			body += generate_element(element.name, generate_element(element.name, '', 'img', 'src="' + element.content + '" style="width: 100%";'), 'div', 'style="overflow: hidden;"')
 		elif element.state == 'txt':
 			body += generate_div(element.name, generate_element('', element.content, 'h1', ''))
 		elif element.state == 'shape':
@@ -94,7 +95,7 @@ def main():
 
 	html_content = create_html(grid_size, css, body)
 
-	create_html_file(html_content)
+	create_html_file(html_content, )
 
 
 
