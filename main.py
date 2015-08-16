@@ -1,4 +1,4 @@
-import tkFont
+
 from lib.SenselGestureFramework.sensel_framework_simple import *
 from Tkinter import *
 from wheel_menu_framework import *
@@ -19,10 +19,12 @@ GRID_PADDING = 0
 
 UNDO_DIST = 100 # Distance to move fingers before calling undo/redo methods
 
+GLOBAL_FONT = "lato"
+
 def snapLoc ((x, y)):
 	newX = round(x/CELL_DIMN)*CELL_DIMN
 	newY = round(y/CELL_DIMN)*CELL_DIMN
-	print("Snapping " + str((x, y)) + " to " + str((newX, newY)))
+	#print("Snapping " + str((x, y)) + " to " + str((newX, newY)))
 	return (newX, newY)
 
 def snapToGrid (xloc, yloc):
@@ -58,6 +60,7 @@ class Objects(object):
 		self.boxselection = [None, None]
 		self.redo_stack = []
 		self.data_at_start = None
+		self.selected_tb = None # The id of the text box listening to keyboard input
 
 	def addObject(self, obj):
 		self.data.append(obj)
@@ -132,6 +135,31 @@ class Line(object):
 	def render(self, canvas):
 		canvas.create_line(self.x, self.y, self.x2, self.y2, fill=self.color, width=3.5)
 		
+class TextBox(object):
+	"""docstring for TextBox"""
+	def __init__(self, (x, y), (x2, y2)):
+		super(TextBox, self).__init__()
+		self.x = x
+		self.y = y
+		self.x2 = x2
+		self.y2 = y2
+		self.text = "Start Typing.."
+		self.isplaceholder = True
+
+	def addText(self, char):
+		self.text += char
+		self.isplaceholder = False
+
+	def remText(self):
+		self.text = self.text[0:-1]
+		if(len(self.text) == 0):
+			self.isplaceholder = True
+			self.text = "Start Typing.."
+
+	def render(self, canvas):
+		self.id = canvas.create_text((self.x + self.x2)/2, (self.y + self.y2)/2, width=(self.x2-self.x))
+		canvas.itemconfig(self.id, text=self.text)
+		canvas.itemconfig(self.id, font=(GLOBAL_FONT, 40))
 
 class SenselEventLoop(SenselGestureHandler):
 	"""docstring for SenselEventLoop"""
@@ -183,8 +211,10 @@ class SenselEventLoop(SenselGestureHandler):
 					pass
 				elif(arg.imageType == Action.TEXT):
 					# Begin listening for keyboard input, write it into a label
-					
-					pass
+					tb = TextBox(arg.boxselection[0], arg.boxselection[1])
+					arg.data.append(tb)
+					arg.selected_tb = tb
+
 				elif(arg.imageType == Action.IMAGE):
 					# Similar to text, open a prompt and fetch image and display
 					pass
@@ -258,13 +288,25 @@ class App(object):
 
 		self.wheel = None
 
+		self.textbox = None
+
 		self.images = getImages()
 
 	def keypress(self, event):
-	    if event.keysym == 'Escape':
-	        self.root.destroy()
-	    x = event.char
-	    print(x)
+		if event.keysym == 'Escape':
+			self.root.destroy()
+		print(event.keycode)
+		if(self.objects.selected_tb):
+			x = event.char
+			print("'" + x + "'")
+			if(self.objects.selected_tb.isplaceholder):
+				self.objects.selected_tb.text = ""
+			# If delete key, delete char
+			if(event.keycode == 3342463): # Delete or backspace
+				self.objects.selected_tb.remText()
+			# Add this key to the text for the text box
+			else:
+				self.objects.selected_tb.addText(x)
 
 	def showGrid(self):
 		# Draw Horizontal Lines
@@ -309,7 +351,7 @@ class App(object):
 				
 				canvas_id = self.canvas.create_text(35, SCREEN_HEIGHT - 10)
 				self.canvas.itemconfig(canvas_id, text=actionText)
-				self.canvas.itemconfig(canvas_id, font=("lato", 20))
+				self.canvas.itemconfig(canvas_id, font=(GLOBAL_FONT, 20))
 
 		# Draw the Context Menu
 		cm = self.objects.context_menu
