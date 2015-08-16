@@ -6,6 +6,7 @@ import threading
 from math import *
 from image_factory import *
 import base64
+from converthtml import *
 # from pymitter import EventEmitter
 
 data_count = 0
@@ -96,6 +97,16 @@ class Objects(object):
 			self.data.append(obj)
 		#print("UNIMPLEMENTED")
 
+	def getElements(self):
+		elements = []
+
+		for d in self.data:
+			elem = d.getElement()
+			if(elem):
+				elements.append(elem)
+
+		return elements
+
 class Shape(object):
 	def __init__(self):
 		global data_count
@@ -115,6 +126,9 @@ class Shape(object):
 	def changeFillColor (self, newFillColor):
 		self.fillcolor = newFillColor
 
+	def getElement(self):
+		return None
+
 class Circle(Shape):
 	"""docstring for Circle"""
 	def __init__(self, (x, y), radius = 5, color="darkgrey", fillcolor=None):
@@ -131,7 +145,6 @@ class Circle(Shape):
 		# emitter.emit('circle')
 		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillcolor, outline=self.color)
 	
-	
 
 class Rectangle(Shape):
 	"""docstring for Rectangle"""
@@ -147,6 +160,10 @@ class Rectangle(Shape):
 
 	def render(self, canvas):
 		canvas.create_rectangle(self.x, self.y, self.x2, self.y2, fill=self.fillcolor, outline=self.color, width=self.width)
+	
+	def getElement(self):
+		elem = Element("shape" + str(self.uid), "shape", [(self.x, self.y), (self.x2, self.y2)], None, self.fillcolor)
+		return elem
 
 class Line(Shape):
 	"""docstring for Line"""
@@ -181,6 +198,10 @@ class Image(Shape):
 	def render(self, canvas):
 		canvas.create_image(self.x + (self.x2 - self.x)/2, self.y + (self.y2-self.y)/2, image=self.image)
 
+	def getElement(self):
+		elem = Element("img" + str(self.uid), "img", [(self.x, self.y), (self.x2, self.y2)], self.url, None)
+		return elem
+
 class TextBox(Shape):
 	"""docstring for TextBox"""
 	def __init__(self, (x, y), (x2, y2), default_text="Start Typing..", submittable=False):
@@ -208,6 +229,10 @@ class TextBox(Shape):
 		self.id = canvas.create_text((self.x + self.x2)/2, (self.y + self.y2)/2, width=(self.x2-self.x))
 		canvas.itemconfig(self.id, text=self.text)
 		canvas.itemconfig(self.id, font=(GLOBAL_FONT, 40))
+
+	def getElement(self):
+		elem = Element("txt" + str(self.uid), "txt", [(self.x, self.y), (self.x2, self.y2)], self.text, None)
+		return elem
 
 class SenselEventLoop(SenselGestureHandler):
 	"""docstring for SenselEventLoop"""
@@ -305,6 +330,15 @@ class SenselEventLoop(SenselGestureHandler):
 				print(str(gesture.state) + " " + str(delta_y) + " " + str(undo_count) + " " + str(UNDO_DIST))
 				print("Originally at " + str(arg.data_at_start) + " now at " + str(arg.data_at_start-undo_count))
 				arg.reundo(max(arg.data_at_start-undo_count, 0))
+
+		# Deploy Trigger
+		if(gesture.contact_points >= 6):
+			print("DEPLOYING!")
+			elements = arg.getElements()
+			path = "~/index.html"
+			grid_size = 94
+			convertHTML(elements, grid_size, path)
+			# On completion, push html file to AWS
 
 class SenselWorkerThread(threading.Thread):
 	"""docstring for SenselWorkerThread"""
