@@ -2,15 +2,15 @@
 from lib.SenselGestureFramework.sensel_framework_simple import *
 from Tkinter import *
 import threading
+# from pymitter import EventEmitter
 
-objects = None
-root = None
-canvas = None
+RENDER_DELAY = 1
 
 class Objects(object):
 	"""Objects that will need to be rendered"""
 	def __init__(self):
 		self.data = []
+		self.cursor = None
 
 	def addObject(self, obj):
 		self.data.append(obj)
@@ -25,8 +25,9 @@ class Circle(object):
 		self.radius = radius
 
 	def render(self, canvas):
-		print("Circle!")
-		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill="grey")
+		#print("Circle!")
+		# emitter.emit('circle')
+		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill="darkgrey", outline="darkgrey")
 		
 
 class SenselEventLoop(SenselGestureHandler):
@@ -35,45 +36,54 @@ class SenselEventLoop(SenselGestureHandler):
 		super(SenselEventLoop, self).__init__(arg)
 
 	def gestureEvent(self, gesture, arg):
-		if(gesture.gesture_type == GestureType.TAP and gesture.weight_class == WeightClass.LIGHT):
+		if(gesture.weight_class == WeightClass.LIGHT):
 			# Draw the cursor
 			print("Would draw cursor")
 			last_location = gesture.tracked_locations[len(gesture.tracked_locations) - 1]
-			objects.addObject(Circle(last_location[0], last_location[1], 20))
-			render(arg)
+			arg.cursor = Circle(last_location[0], last_location[1], 5)
+			# Emit event to re-render 
+			#render(arg[0], arg[1])
 
 class SenselWorkerThread(threading.Thread):
 	"""docstring for SenselWorkerThread"""
-	def __init__(self, objects):
+	def __init__(self, arg):
 		# Pass a reference to the objects up as the arg
 		super(SenselWorkerThread, self).__init__()
-		self.event_loop = SenselEventLoop(objects)
+		self.event_loop = SenselEventLoop(arg)
 
 	def run(self):
 		self.event_loop.start()
 		
+class App(object):
+	"""docstring for App"""
+	def __init__(self, objects):
+		super(App, self).__init__()
 
-def view_setup():
-	global root, canvas, objects
+		self.root = Tk()
+		self.root.resizable(0, 0)
+		self.root.title("Hack the Planet: Sensel Website Creator")
 
-	if(root == None): 
-		root = Tk()
-		root.resizable(0, 0)
-		root.title("Hack the Planet: Sensel Website Creator")
+		self.canvas = Canvas(self.root, width=1150, height=600)
+		self.canvas.pack()
 
-	if(canvas == None): 
-		canvas = Canvas(root, width=1150, height=600)
-		canvas.pack()
+		self.objects = objects
+		
+		self.canvas.after(RENDER_DELAY, self.render)
 
-	render(objects, canvas)
-	
-	root.mainloop()
+	def render(self):
 
-def render(objects, canvas):
-	print(objects)
-	for o in objects.data:
-		print str(o.x) + " " + str(o.y) + " " + str(o.radius)
-		o.render(canvas)
+		self.canvas.delete("all")
+
+		#print(self.objects.data)
+		for o in self.objects.data:
+			o.render(self.canvas)
+
+		# Draw the cursor
+		if(self.objects.cursor):
+			print str(self.objects.cursor.x) + " " + str(self.objects.cursor.y) + " " + str(self.objects.cursor.radius)
+			self.objects.cursor.render(self.canvas)
+
+		self.canvas.after(RENDER_DELAY, self.render)
 
 if __name__ == '__main__':
 
@@ -83,7 +93,11 @@ if __name__ == '__main__':
 	t.start()
 
 	# Setup the screen
-	view_setup()
+	app = App(objects)
+
+	app.root.mainloop()
+
+
 
 
 
