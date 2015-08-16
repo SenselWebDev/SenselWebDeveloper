@@ -33,8 +33,8 @@ def snapLoc ((x, y)):
 	return (newX, newY)
 
 def snapToGrid (xloc, yloc):
-	gridCol = round(xloc/NUM_COLUMNS)
-	gridRow = round(yloc/NUM_COLUMNS)
+	gridCol = round(xloc/CELL_DIMN)
+	gridRow = round(yloc/CELL_DIMN)
 	return (gridRow, gridCol)
 
 def getDegreesFromDirection(direction):
@@ -261,8 +261,9 @@ class SenselEventLoop(SenselGestureHandler):
 			else:
 				arg.actionText = ""
 				arg.context_menu = None
-				arg.grid_visible = True
-				arg.imageType = convertDirectionToAction(gesture.bestdirection)
+				if(gesture.gesture_type == GestureType.PAN):
+					arg.grid_visible = True
+					arg.imageType = convertDirectionToAction(gesture.bestdirection)
 
 		# Box Drawing Trigger
 		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
@@ -322,7 +323,7 @@ class SenselEventLoop(SenselGestureHandler):
 			if(gesture.state == GestureState.ENDED):
 				arg.actionText = ""
 			else:
-				if(gesture.state == GestureState.STARTED):
+				if(gesture.state == GestureState.STARTED or (gesture.state == GestureState.MOVED and arg.data_at_start == None)):
 					arg.data_at_start = len(arg.data) if arg.data else 0
 				#print(gesture.bestdirection)
 				delta_y = gesture.tracked_locations[-1][1] - gesture.down_y
@@ -343,7 +344,7 @@ class SenselEventLoop(SenselGestureHandler):
 				grid_size = 94
 				convertHTML(elements, grid_size, path)
 				# On completion, push html file to AWS
-				
+
 				self.deployed = True
 
 class SenselWorkerThread(threading.Thread):
