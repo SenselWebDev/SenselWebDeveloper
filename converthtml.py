@@ -40,8 +40,8 @@ def get_css_properties(elements):
 
 	for element in elements:
 		element_property += '.' + element.name + '{ '
-		element_property += 'grid-column: ' + str(element.position[0][0]) + '/' + str(element.position[1][0]) + ';'
-		element_property += 'grid-row: ' + str(element.position[0][1]) + '/' + str(element.position[1][1]) + ';'
+		element_property += 'grid-column: ' + str(round(element.position[0][0])) + '/' + str(round(element.position[1][0])) + ';'
+		element_property += 'grid-row: ' + str(round(element.position[0][1])) + '/' + str(round(element.position[1][1])) + ';'
 		if element.state == 'txt':
 			element_property += 'color: ' + element.color + ';'
 			element_property += 'text-align: center;'
