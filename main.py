@@ -1,4 +1,4 @@
-
+import tkFont
 from lib.SenselGestureFramework.sensel_framework_simple import *
 from Tkinter import *
 from wheel_menu_framework import *
@@ -16,6 +16,8 @@ CELL_HEIGHT = SCREEN_WIDTH/NUM_COLUMNS
 GRID_COLOR = "grey"
 GRID_WIDTH = 1.5
 GRID_PADDING = 0
+
+UNDO_DIST = 100 # Distance to move fingers before calling undo/redo methods
 
 def snapLoc ((x, y)):
 	newX = round(x/CELL_DIMN)*CELL_DIMN
@@ -54,17 +56,38 @@ class Objects(object):
 		self.bestdirection = None
 		self.grid_visible = False
 		self.boxselection = [None, None]
+		self.redo_stack = []
+		self.data_at_start = None
 
 	def addObject(self, obj):
 		self.data.append(obj)
 
+	def reundo(self, end_obj_count):
+		obj_count = len(self.data)
+		obj_diff = int(end_obj_count - obj_count)
+		print(obj_diff)
+		if(obj_diff < 0):
+			# Perform Undos
+			for i in range(0, -obj_diff):
+				self.undo()
+		elif(obj_diff > 0):
+			# Perform Redos
+			for i in range(0, obj_diff):
+				self.redo()
+
 	def undo(self):
 		# pop the previous object, save to temp storage and re-render
-		print("UNIMPLEMENTED")
+		if(len(self.data) > 0):
+			obj = self.data.pop()
+			self.redo_stack.append(obj)
+		#print("UNIMPLEMENTED")
 
 	def redo(self):
 		# If element exists in temp storage, add to object queue and re-render
-		print("UNIMPLEMENTED")
+		if(len(self.redo_stack) > 0):
+			obj = self.redo_stack.pop()
+			self.data.append(obj)
+		#print("UNIMPLEMENTED")
 
 class Circle(object):
 	"""docstring for Circle"""
@@ -185,17 +208,23 @@ class SenselEventLoop(SenselGestureHandler):
 			arg.avg_location = gesture.avg_location
 			#print(self.avg_location)
 			arg.bestdirection = gesture.bestdirection
+
+		# Undo/Redo Trigger
 		if(gesture.contact_points == 3):
 			if(gesture.state == GestureState.ENDED):
 				arg.actionText = ""
 			else:
+				if(gesture.state == GestureState.STARTED):
+					arg.data_at_start = len(arg.data) if arg.data else 0
 				#print(gesture.bestdirection)
-				if(gesture.bestdirection == Direction.DOWN):
-					arg.undo()
-					arg.actionText = "UNDO"
-				elif(gesture.bestdirection == Direction.UP):
-					arg.redo()
-					arg.actionText = "REDO"
+				delta_y = gesture.tracked_locations[-1][1] - gesture.down_y
+				undo_count = floor(delta_y / UNDO_DIST) 
+				if(undo_count < 0):
+					# handle flooring for negatives 
+					undo_count += 1
+				print(str(gesture.state) + " " + str(delta_y) + " " + str(undo_count) + " " + str(UNDO_DIST))
+				print("Originally at " + str(arg.data_at_start) + " now at " + str(arg.data_at_start-undo_count))
+				arg.reundo(max(arg.data_at_start-undo_count, 0))
 
 class SenselWorkerThread(threading.Thread):
 	"""docstring for SenselWorkerThread"""
@@ -216,6 +245,9 @@ class App(object):
 		self.root.resizable(0, 0)
 		self.root.title("Hack the Planet: Sensel Website Creator")
 
+		# Hook up Keyboard
+		self.root.bind_all('<Key>', self.keypress)
+
 		self.canvas = Canvas(self.root, width=SCREEN_WIDTH - 20, height=SCREEN_HEIGHT)
 		self.canvas.pack()
 
@@ -227,6 +259,12 @@ class App(object):
 		self.wheel = None
 
 		self.images = getImages()
+
+	def keypress(self, event):
+	    if event.keysym == 'Escape':
+	        self.root.destroy()
+	    x = event.char
+	    print(x)
 
 	def showGrid(self):
 		# Draw Horizontal Lines
@@ -271,7 +309,7 @@ class App(object):
 				
 				canvas_id = self.canvas.create_text(35, SCREEN_HEIGHT - 10)
 				self.canvas.itemconfig(canvas_id, text=actionText)
-				self.canvas.itemconfig(canvas_id, font=("courier", 20))
+				self.canvas.itemconfig(canvas_id, font=("lato", 20))
 
 		# Draw the Context Menu
 		cm = self.objects.context_menu
