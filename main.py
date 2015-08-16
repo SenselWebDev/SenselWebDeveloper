@@ -3,22 +3,29 @@ from lib.SenselGestureFramework.sensel_framework_simple import *
 from Tkinter import *
 from wheel_menu_framework import *
 import threading
+import math *
 # from pymitter import EventEmitter
 
 RENDER_DELAY = 1
 
 SCREEN_WIDTH = 1150
 SCREEN_HEIGHT = 600
-
 NUM_COLUMNS = 16
 CELL_DIMN = SCREEN_WIDTH/NUM_COLUMNS
+CELL_HEIGHT = SCREEN_WIDTH/NUM_COLUMNS
 GRID_COLOR = "grey"
 GRID_WIDTH = 1.5
 GRID_PADDING = 0
 
-def snapPoint((x, y)):
+def snapLoc (xloc, yloc):
+	newX = math.Round(xLoc/NUM_COLUMNS)*NUM_COLUMNS
+	newY = math.Round(yLoc/NUM_COLUMNS)*NUM_COLUMNS
+	return (newX, newY)
 
-	return (x, y)
+def snapToGrid (xloc, yloc):
+	gridCol = math.Round(xLoc/NUM_COLUMNS)
+	gridRow = math.Round(yLoc/NUM_COLUMNS)
+	return (gridRow, gridCol)
 
 def getDegreesFromDirection(direction):
 	angle = None
