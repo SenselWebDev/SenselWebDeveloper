@@ -1,6 +1,6 @@
 X_DIMENSION = 16
 Y_DIMENSION = 16
-ABSOLUTE_FILE_PATH = ''
+ABSOLUTE_FILE_PATH = '/Users/bgm9103/Desktop/test.html'
 
 def create_html(grid_size, css_properties, body):
 	w = "<!doctype html><header><link href='http://fonts.googleapis.com/css?family=Lato:300' rel='stylesheet' type='text/css'><style>body {font-family: 'Lato', sans-serif;font-size: 30px;} .wrapper {display: grid; grid-template-columns: "
@@ -27,9 +27,9 @@ def get_css_properties(elements):
 	property = ''
 
 	for element in elements:
-		property += '.' + elements.name + '{ '
-		property += 'grid-column: ' + str(elements.position[0][0]) + '/' + str(elements.position[1][0]) + ';'
-		property += 'grid-row: ' + str(elements.position[0][1]) + '/' + str(elements.position[1][1]) + ';'
+		property += '.' + element.name + '{ '
+		property += 'grid-column: ' + str(element.position[0][0]) + '/' + str(element.position[1][0]) + ';'
+		property += 'grid-row: ' + str(element.position[0][1]) + '/' + str(element.position[1][1]) + ';'
 		if element.state == 'txt' or element.state == 'shape':
 			property += 'background: ' + element.color + ';'
 		property += '} '
