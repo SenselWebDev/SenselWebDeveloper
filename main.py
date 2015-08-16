@@ -357,7 +357,7 @@ class SenselEventLoop(SenselGestureHandler):
 				grid_size = 94
 				convertHTML(elements, grid_size, path)
 				# On completion, push html file to AWS
-
+				deploy()
 				self.deployed = True
 
 class SenselWorkerThread(threading.Thread):

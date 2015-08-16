@@ -40,8 +40,8 @@ def get_css_properties(elements):
 
 	for element in elements:
 		element_property += '.' + element.name + '{ '
-		element_property += 'grid-column: ' + str(round(element.position[0][0])) + '/' + str(round(element.position[1][0])) + ';'
-		element_property += 'grid-row: ' + str(round(element.position[0][1])) + '/' + str(round(element.position[1][1])) + ';'
+		element_property += 'grid-column: ' + str(int(round(element.position[0][1]))) + '/' + str(int(round(element.position[1][1]))) + ';'
+		element_property += 'grid-row: ' + str(int(round(element.position[0][0]))) + '/' + str(int(round(element.position[1][0]))) + ';'
 		if element.state == 'txt':
 			element_property += 'color: ' + element.color + ';'
 			element_property += 'text-align: center;'
@@ -54,6 +54,8 @@ def get_css_properties(elements):
 def get_body(elements):
 	body = '<body>'
 
+	body += '<div class="wrapper">'
+
 	for element in elements:
 		if element.state == 'img':
 			body += generate_element(element.name, generate_element(element.name, '', 'img', 'src="' + element.content + '";'), 'div', 'style="overflow: hidden;"')
@@ -61,6 +63,8 @@ def get_body(elements):
 			body += generate_div(element.name, generate_element('', element.content, 'h1', ''))
 		elif element.state == 'shape':
 			body += generate_div(element.name, '')
+
+	body += '</div>'
 
 	body += '</body>'
 
