@@ -103,7 +103,13 @@ class Circle(object):
 		#print("Circle!")
 		# emitter.emit('circle')
 		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillcolor, outline=self.color)
-		
+	
+	def changeColor (self, newColor):
+		self.color = newColor
+
+	def changeFillColor (self, newFillColor):
+		self.fillcolor = newFillColor
+
 class Rectangle(object):
 	"""docstring for Rectangle"""
 	def __init__(self, (x, y), (x2, y2), color="#666", fillcolor=None, width=3.5):
@@ -118,6 +124,13 @@ class Rectangle(object):
 
 	def render(self, canvas):
 		canvas.create_rectangle(self.x, self.y, self.x2, self.y2, fill=self.fillcolor, outline=self.color, width=self.width)
+
+	def changeColor (self, newColor):
+		self.color = newColor
+
+	def changeFillColor (self, newFillColor):
+		self.fillcolor = newFillColor
+
 
 class Line(object):
 	"""docstring for Line"""
