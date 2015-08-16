@@ -18,7 +18,7 @@ class Action(Enum):
 	TEXT = 2
 	PAINT = 3
 
-def getImages():
+def getImageDictionary():
 	return {
 		Action.IMAGE: PhotoImage(file="fontawesome/pic.gif").subsample(12, 12),
 		Action.SHAPE: PhotoImage(file="fontawesome/square.gif").subsample(12, 12),
@@ -46,7 +46,7 @@ class WheelMenu(object):
 		self.yloc = yloc
 		self.TR = 0
 		self.highlight = 0
-		self.images = getImages()
+		self.images = getImageDictionary()
 		self.color = "#FFFFFF"
 
 	def changeLoc (self, xloc, yloc):
@@ -73,14 +73,13 @@ class WheelMenu(object):
 		canvas.create_image(self.xloc-WHEEL_SIDE/2 + 30, self.yloc, image=self.images[Action.IMAGE])
 		canvas.create_image(self.xloc+WHEEL_SIDE/2 - 30, self.yloc, image=self.images[Action.SHAPE])
 		canvas.create_image(self.xloc, self.yloc-WHEEL_SIDE/2 + 30, image=self.images[Action.TEXT])
-		canvas.create_image(self.xloc, self.yloc-WHEEL_SIDE/2 - 30, image=self.images[Action.PAINT])
+		canvas.create_image(self.xloc, self.yloc+WHEEL_SIDE/2 - 30, image=self.images[Action.PAINT])
 
 	def changeColor (self, color):
 		self.color = color
 
 	def clearWheel (self, canv):
 		if self.TR:
-			print "ah"
 			canv.delete(self.TR)
 			canv.delete(self.TL)
 			canv.delete(self.circ)

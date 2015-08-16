@@ -8,6 +8,7 @@ from image_factory import *
 import base64
 from converthtml import *
 from aws import *
+from color_wheel_framework import *
 # from pymitter import EventEmitter
 
 data_count = 0
@@ -90,14 +91,12 @@ class Objects(object):
 		if(len(self.data) > 0):
 			obj = self.data.pop()
 			self.redo_stack.append(obj)
-		#print("UNIMPLEMENTED")
 
 	def redo(self):
 		# If element exists in temp storage, add to object queue and re-render
 		if(len(self.redo_stack) > 0):
 			obj = self.redo_stack.pop()
 			self.data.append(obj)
-		#print("UNIMPLEMENTED")
 
 	def getElements(self):
 		elements = []
@@ -146,7 +145,6 @@ class Circle(Shape):
 		#print("Circle!")
 		# emitter.emit('circle')
 		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillcolor, outline=self.color)
-	
 
 class Rectangle(Shape):
 	"""docstring for Rectangle"""
@@ -256,7 +254,6 @@ class SenselEventLoop(SenselGestureHandler):
 			if(not gesture.state == GestureState.ENDED and not gesture.state == GestureState.INITED ):
 				show_cursors = False
 				if(arg.context_menu == None):
-					arg.actionText = "MENU"
 					avg_curr_location = gesture.tracked_locations[len(gesture.tracked_locations) - 1]
 					arg.context_menu = avg_curr_location
 					print("Context Menu Triggerred")
@@ -272,10 +269,18 @@ class SenselEventLoop(SenselGestureHandler):
 					arg.grid_visible = True
 
 		# Paint Select Trigger
-		if(arg.imageType == Action.PAINT):
+		elif(arg.imageType == Action.PAINT):
+			if(gesture.state == GestureState.ENDED):
+				arg.imageType = None
+				arg.actionText = ""
+			# if(gesture.state == GestureState.MOVED):
+			# 	arg.current_color = arg.colorwheel.getColor(gesture.avg_location[0], gesture.avg_location[1])
+			# elif(gesture.state == GestureState.ENDED):
+			# 	print("Paint select ended")
+			# 	arg.actionText = ""
+			# 	arg.imageType = None
 			print("Paint selected")
 			#arg.actionText = ""
-			pass
 
 		# Box Drawing Trigger
 		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
@@ -295,13 +300,13 @@ class SenselEventLoop(SenselGestureHandler):
 				if(not arg.boxselection[0][0] == arg.boxselection[1][0] and not arg.boxselection[0][1] == arg.boxselection[1][1]):
 					if(arg.imageType == Action.SHAPE):
 						# Draw the rectangle at the box selection
-						rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
+						rect = Rectangle(arg.boxselection[0], arg.boxselection[1], color=arg.current_color)
 						arg.data.append(rect)
 						arg.actionText = ""
 
 					elif(arg.imageType == Action.TEXT):
 						# Begin listening for keyboard input, write it into a label
-						tb = TextBox(arg.boxselection[0], arg.boxselection[1])
+						tb = TextBox(arg.boxselection[0], arg.boxselection[1], textcolor=arg.current_color)
 						arg.data.append(tb)
 						arg.selected_tb = tb
 
@@ -313,6 +318,7 @@ class SenselEventLoop(SenselGestureHandler):
 
 				arg.grid_visible = False # Toggle the grid to hide next time through the render function
 				arg.imageType = None
+				arg.actionText = ""
 				arg.boxselection = [None, None]
 			else:
 				arg.ui_data.append(Rectangle(arg.boxselection[0], arg.boxselection[1], fillcolor="white", color="#F00996"))
@@ -391,10 +397,10 @@ class App(object):
 		self.actionTextElement = None
 
 		self.wheel = None
-
+		self.colorwheel = None
 		self.textbox = None
 
-		self.images = getImages()
+		self.images = getImageDictionary()
 
 	def keypress(self, event):
 		if event.keysym == 'Escape':
@@ -459,7 +465,7 @@ class App(object):
 
 		# Draw the Image
 		imageType = self.objects.imageType
-		if(imageType and imageType in self.images.keys()):
+		if(imageType and imageType in self.images):
 			self.canvas.create_image(35, SCREEN_HEIGHT - 40, image=self.images[imageType])
 
 		# Draw the action text
@@ -479,6 +485,7 @@ class App(object):
 			if(self.wheel):
 				self.wheel.clearWheel(self.canvas)
 			self.wheel = WheelMenu(0, 0) 
+			self.wheel.changeColor(self.objects.current_color)
 			self.wheel.changeLoc(cm[0], cm[1])
 			self.wheel.drawWheel(self.canvas)
 			# If the selection is far enough from the center
@@ -486,6 +493,16 @@ class App(object):
 				dist = euclideanDist(cm, self.objects.avg_location)
 				if(dist >= SMALL_WHEEL_SIDE):
 					self.wheel.highlightSide(self.canvas, getDegreesFromDirection(self.objects.bestdirection))
+
+		# Draw the color wheel
+		#if(self.objects.colorwheel):
+		if(self.objects.imageType == Action.PAINT):
+			if(not self.colorwheel):
+				x_center = SCREEN_WIDTH/2
+				y_center = SCREEN_HEIGHT/2
+				self.colorwheel = ColorWheel(x_center, y_center)
+			self.objects.current_color = self.colorwheel.getColor(self.objects.avg_location[0], self.objects.avg_location[1])
+			self.colorwheel.drawWheel(self.canvas)
 
 		# Draw the cursor
 		if(len(self.objects.cursors) > 0):

@@ -7,10 +7,6 @@ from colorsys import *
 WHEEL_SIDE = 200.0
 SMALL_COLOR_SIDE = WHEEL_SIDE/2 - 15
 
-def getImages():
-	return PhotoImage(file="fontawesome/colorwheel.gif")
-
-
 class ColorWheel(object):
 
 	def __init__ (self, xloc, yloc):
@@ -18,13 +14,13 @@ class ColorWheel(object):
 		self.yloc = yloc
 		self.TR = 0
 		self.color = "#FFFFFF"
-		self.images = getImages()
+		self.images = PhotoImage(file="fontawesome/colorwheel.gif")
 
 	def changeLoc (self, xloc, yloc):
 		self.xloc = xloc
 		self.yloc = yloc
 
-	def getColor (self, canv, currx, curry):
+	def getColor (self, currx, curry):
 		delta_y = curry - self.yloc
 		delta_x = currx - self.xloc
 		angle = -1*atan2(delta_y, -delta_x) + pi
@@ -40,11 +36,10 @@ class ColorWheel(object):
 		g = g * 255
 		b = b * 255
 		self.color = self.rgb_to_hex((r,g,b))
-		self.drawWheel(canv)
+		#self.drawWheel(canv)
 		return self.color
 
 	def drawWheel (self, canv):
-
 		self.inner = canv.create_oval(self.xloc - SMALL_COLOR_SIDE, self.yloc + SMALL_COLOR_SIDE, self.xloc + SMALL_COLOR_SIDE, self.yloc - SMALL_COLOR_SIDE,  tags="inner", fill = self.color, outline = "")
 		self.wheel = canv.create_image(self.xloc, self.yloc, image=self.images)
 
