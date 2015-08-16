@@ -7,6 +7,7 @@ from math import *
 from image_factory import *
 import base64
 from converthtml import *
+from aws import *
 # from pymitter import EventEmitter
 
 data_count = 0
