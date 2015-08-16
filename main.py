@@ -67,6 +67,7 @@ class Objects(object):
 		self.redo_stack = []
 		self.data_at_start = None
 		self.selected_tb = None # The id of the text box listening to keyboard input
+		self.current_color = "#ddd"
 
 	def addObject(self, obj):
 		self.data.append(obj)
@@ -252,7 +253,7 @@ class SenselEventLoop(SenselGestureHandler):
 		# Context Menu Trigger
 		if(gesture.contact_points == 2 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
 			#print(gesture.gesture_type)
-			if(not gesture.state == GestureState.ENDED):
+			if(not gesture.state == GestureState.ENDED and not gesture.state == GestureState.INITED ):
 				show_cursors = False
 				if(arg.context_menu == None):
 					arg.actionText = "MENU"
@@ -260,13 +261,21 @@ class SenselEventLoop(SenselGestureHandler):
 					arg.context_menu = avg_curr_location
 					print("Context Menu Triggerred")
 			else:
-				arg.actionText = ""
 				arg.context_menu = None
 				dist = euclideanDist((gesture.down_x, gesture.down_y), gesture.avg_location)
 				print("Dist: " + str(dist))
-				if(dist > 60):
+				arg.imageType = convertDirectionToAction(gesture.bestdirection)
+				arg.actionText = str(arg.imageType)[7:]
+				if(arg.imageType == Action.PAINT):
+					arg.grid_visible = False
+				else:
 					arg.grid_visible = True
-					arg.imageType = convertDirectionToAction(gesture.bestdirection)
+
+		# Paint Select Trigger
+		if(arg.imageType == Action.PAINT):
+			print("Paint selected")
+			#arg.actionText = ""
+			pass
 
 		# Box Drawing Trigger
 		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
@@ -288,6 +297,7 @@ class SenselEventLoop(SenselGestureHandler):
 						# Draw the rectangle at the box selection
 						rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
 						arg.data.append(rect)
+						arg.actionText = ""
 
 					elif(arg.imageType == Action.TEXT):
 						# Begin listening for keyboard input, write it into a label
