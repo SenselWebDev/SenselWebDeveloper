@@ -73,7 +73,7 @@ class WheelMenu(object):
 		canvas.create_image(self.xloc-WHEEL_SIDE/2 + 30, self.yloc, image=self.images[Action.IMAGE])
 		canvas.create_image(self.xloc+WHEEL_SIDE/2 - 30, self.yloc, image=self.images[Action.SHAPE])
 		canvas.create_image(self.xloc, self.yloc-WHEEL_SIDE/2 + 30, image=self.images[Action.TEXT])
-		canvas.create_image(self.xloc, self.yloc-WHEEL_SIDE/2 - 30, image=self.images[Action.PAINT])
+		canvas.create_image(self.xloc, self.yloc+WHEEL_SIDE/2 - 30, image=self.images[Action.PAINT])
 
 	def changeColor (self, color):
 		self.color = color
