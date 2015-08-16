@@ -204,7 +204,7 @@ class Image(Shape):
 
 class TextBox(Shape):
 	"""docstring for TextBox"""
-	def __init__(self, (x, y), (x2, y2), default_text="Start Typing..", submittable=False):
+	def __init__(self, (x, y), (x2, y2), default_text="Start Typing..", submittable=False, textcolor="#444"):
 		super(TextBox, self).__init__()
 		self.x = x
 		self.y = y
@@ -214,6 +214,7 @@ class TextBox(Shape):
 		self.default_text = default_text
 		self.isplaceholder = True
 		self.submittable = submittable
+		self.textcolor = textcolor
 
 	def addText(self, char):
 		self.text += char
@@ -229,9 +230,10 @@ class TextBox(Shape):
 		self.id = canvas.create_text((self.x + self.x2)/2, (self.y + self.y2)/2, width=(self.x2-self.x))
 		canvas.itemconfig(self.id, text=self.text)
 		canvas.itemconfig(self.id, font=(GLOBAL_FONT, 40))
+		canvas.itemconfig(self.id, fill=self.textcolor)
 
 	def getElement(self):
-		elem = Element("txt" + str(self.uid), "txt", [(self.x, self.y), (self.x2, self.y2)], self.text, None)
+		elem = Element("txt" + str(self.uid), "txt", [(self.x, self.y), (self.x2, self.y2)], self.text, self.textcolor)
 		return elem
 
 class SenselEventLoop(SenselGestureHandler):
@@ -275,12 +277,11 @@ class SenselEventLoop(SenselGestureHandler):
 			arg.boxselection[1] = anchor_point
 
 			if(gesture.state == GestureState.ENDED):
-				# Draw the rectangle at the box selection
-				rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
-				arg.data.append(rect)
 				# Trigger Individual Action Menu Item events
 				if(arg.imageType == Action.SHAPE):
-					# No necessary code here
+					# Draw the rectangle at the box selection
+					rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
+					arg.data.append(rect)
 					pass
 				elif(arg.imageType == Action.TEXT):
 					# Begin listening for keyboard input, write it into a label
