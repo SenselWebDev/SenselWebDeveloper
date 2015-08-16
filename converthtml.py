@@ -56,7 +56,7 @@ def get_body(elements):
 
 	for element in elements:
 		if element.state == 'img':
-			body += generate_element(element.name, generate_element(element.name, '', 'img', 'src="' + element.content + '" style="width: 100%";'), 'div', 'style="overflow: hidden;"')
+			body += generate_element(element.name, generate_element(element.name, '', 'img', 'src="' + element.content + '";'), 'div', 'style="overflow: hidden;"')
 		elif element.state == 'txt':
 			body += generate_div(element.name, generate_element('', element.content, 'h1', ''))
 		elif element.state == 'shape':
