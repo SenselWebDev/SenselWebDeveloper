@@ -5,6 +5,7 @@ from lib.SenselGestureFramework.sensel_framework_simple import Direction
 
 WHEEL_SIDE = 200.0
 SMALL_WHEEL_SIDE = WHEEL_SIDE/5
+BORDER_WHEEL_SIDE = SMALL_WHEEL_SIDE + 3
 LINE_L = WHEEL_SIDE*math.sqrt(2)/4
 
 BACK_COLOR = "#97D6FF"
@@ -57,6 +58,7 @@ class WheelMenu(object):
 		self.circ = canv.create_oval(self.xloc - WHEEL_SIDE/2, self.yloc + WHEEL_SIDE/2, self.xloc + WHEEL_SIDE/2, self.yloc - WHEEL_SIDE/2,  tags="circle", fill = BACK_COLOR, outline = "")
 		self.TR = canv.create_line(self.xloc - LINE_L, self.yloc - LINE_L, self.xloc + LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TRline", width = LINE_WIDTH)
 		self.TL = canv.create_line(self.xloc + LINE_L, self.yloc - LINE_L, self.xloc - LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TLline", width = LINE_WIDTH)
+		self.border = canv.create_oval(self.xloc - BORDER_WHEEL_SIDE, self.yloc + BORDER_WHEEL_SIDE, self.xloc + BORDER_WHEEL_SIDE, self.yloc - BORDER_WHEEL_SIDE,  tags="inner", fill = "white", outline = "")
 		self.inner = canv.create_oval(self.xloc - SMALL_WHEEL_SIDE, self.yloc + SMALL_WHEEL_SIDE, self.xloc + SMALL_WHEEL_SIDE, self.yloc - SMALL_WHEEL_SIDE,  tags="inner", fill = self.color, outline = "")
 		self.drawImages(canv)
 		
@@ -65,6 +67,7 @@ class WheelMenu(object):
 		self.highlight = canv.create_arc(self.xloc - WHEEL_SIDE/2, self.yloc + WHEEL_SIDE/2, self.xloc + WHEEL_SIDE/2, self.yloc - WHEEL_SIDE/2,  tags="circle", fill = HIGH_COLOR, outline = "", start = side-45, extent = 90)
 		self.TR = canv.create_line(self.xloc - LINE_L, self.yloc - LINE_L, self.xloc + LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TRline", width = LINE_WIDTH)
 		self.TL = canv.create_line(self.xloc + LINE_L, self.yloc - LINE_L, self.xloc - LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TLline", width = LINE_WIDTH)
+		self.border = canv.create_oval(self.xloc - BORDER_WHEEL_SIDE, self.yloc + BORDER_WHEEL_SIDE, self.xloc + BORDER_WHEEL_SIDE, self.yloc - BORDER_WHEEL_SIDE,  tags="inner", fill = "white", outline = "")
 		self.inner = canv.create_oval(self.xloc - SMALL_WHEEL_SIDE, self.yloc + SMALL_WHEEL_SIDE, self.xloc + SMALL_WHEEL_SIDE, self.yloc - SMALL_WHEEL_SIDE,  tags="inner", fill = self.color, outline = "")
 		self.drawImages(canv)
 
@@ -85,6 +88,7 @@ class WheelMenu(object):
 			canv.delete(self.TL)
 			canv.delete(self.circ)
 			canv.delete(self.inner)
+			canv.delete(self.border)
 		if self.highlight:
 			canv.delete(self.highlight)
 
