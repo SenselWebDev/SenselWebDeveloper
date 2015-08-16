@@ -251,7 +251,7 @@ class SenselEventLoop(SenselGestureHandler):
 
 		# Context Menu Trigger
 		if(gesture.contact_points == 2 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
-			#print("possible trigger")
+			#print(gesture.gesture_type)
 			if(not gesture.state == GestureState.ENDED):
 				show_cursors = False
 				if(arg.context_menu == None):
@@ -262,9 +262,11 @@ class SenselEventLoop(SenselGestureHandler):
 			else:
 				arg.actionText = ""
 				arg.context_menu = None
-				#if(gesture.gesture_type == GestureType.PAN):
-				arg.grid_visible = True
-				arg.imageType = convertDirectionToAction(gesture.bestdirection)
+				dist = euclideanDist((gesture.down_x, gesture.down_y), gesture.avg_location)
+				print("Dist: " + str(dist))
+				if(dist > 60):
+					arg.grid_visible = True
+					arg.imageType = convertDirectionToAction(gesture.bestdirection)
 
 		# Box Drawing Trigger
 		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
