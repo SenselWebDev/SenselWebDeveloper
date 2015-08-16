@@ -1,6 +1,5 @@
 from Tkinter import *
 import math
-from PIL import ImageTk
 from enum import Enum
 from lib.SenselGestureFramework.sensel_framework_simple import Direction
 
@@ -17,12 +16,14 @@ class Action(Enum):
 	IMAGE = 0
 	SHAPE = 1
 	TEXT = 2
+	PAINT = 3
 
 def getImages():
 	return {
 		Action.IMAGE: PhotoImage(file="fontawesome/pic.gif").subsample(12, 12),
 		Action.SHAPE: PhotoImage(file="fontawesome/square.gif").subsample(12, 12),
-		Action.TEXT: PhotoImage(file="fontawesome/text.gif").subsample(12, 12)
+		Action.TEXT: PhotoImage(file="fontawesome/text.gif").subsample(12, 12), 
+		Action.PAINT: PhotoImage(file="fontawesome/paint.gif").subsample(12, 12)
 	}
 
 def convertDirectionToAction(direction):
@@ -33,6 +34,8 @@ def convertDirectionToAction(direction):
 		returnValue = Action.IMAGE
 	elif(direction == Direction.RIGHT):
 		returnValue = Action.SHAPE
+	elif(direction == Direction.DOWN):
+		returnValue = Action.PAINT
 	return returnValue
 
 
@@ -44,17 +47,17 @@ class WheelMenu(object):
 		self.TR = 0
 		self.highlight = 0
 		self.images = getImages()
+		self.color = "#FFFFFF"
 
 	def changeLoc (self, xloc, yloc):
 		self.xloc = xloc
 		self.yloc = yloc
 
 	def drawWheel (self, canv):
-		print LINE_L
 		self.circ = canv.create_oval(self.xloc - WHEEL_SIDE/2, self.yloc + WHEEL_SIDE/2, self.xloc + WHEEL_SIDE/2, self.yloc - WHEEL_SIDE/2,  tags="circle", fill = BACK_COLOR, outline = "")
 		self.TR = canv.create_line(self.xloc - LINE_L, self.yloc - LINE_L, self.xloc + LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TRline", width = LINE_WIDTH)
 		self.TL = canv.create_line(self.xloc + LINE_L, self.yloc - LINE_L, self.xloc - LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TLline", width = LINE_WIDTH)
-		self.inner = canv.create_oval(self.xloc - SMALL_WHEEL_SIDE, self.yloc + SMALL_WHEEL_SIDE, self.xloc + SMALL_WHEEL_SIDE, self.yloc - SMALL_WHEEL_SIDE,  tags="inner", fill = "white", outline = "")
+		self.inner = canv.create_oval(self.xloc - SMALL_WHEEL_SIDE, self.yloc + SMALL_WHEEL_SIDE, self.xloc + SMALL_WHEEL_SIDE, self.yloc - SMALL_WHEEL_SIDE,  tags="inner", fill = self.color, outline = "")
 		self.drawImages(canv)
 		
 	def highlightSide (self, canv, side):		
@@ -62,7 +65,7 @@ class WheelMenu(object):
 		self.highlight = canv.create_arc(self.xloc - WHEEL_SIDE/2, self.yloc + WHEEL_SIDE/2, self.xloc + WHEEL_SIDE/2, self.yloc - WHEEL_SIDE/2,  tags="circle", fill = HIGH_COLOR, outline = "", start = side-45, extent = 90)
 		self.TR = canv.create_line(self.xloc - LINE_L, self.yloc - LINE_L, self.xloc + LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TRline", width = LINE_WIDTH)
 		self.TL = canv.create_line(self.xloc + LINE_L, self.yloc - LINE_L, self.xloc - LINE_L, self.yloc + LINE_L, fill = LINE_COLOR, tags="TLline", width = LINE_WIDTH)
-		self.inner = canv.create_oval(self.xloc - SMALL_WHEEL_SIDE, self.yloc + SMALL_WHEEL_SIDE, self.xloc + SMALL_WHEEL_SIDE, self.yloc - SMALL_WHEEL_SIDE,  tags="inner", fill = "white", outline = "")
+		self.inner = canv.create_oval(self.xloc - SMALL_WHEEL_SIDE, self.yloc + SMALL_WHEEL_SIDE, self.xloc + SMALL_WHEEL_SIDE, self.yloc - SMALL_WHEEL_SIDE,  tags="inner", fill = self.color, outline = "")
 		self.drawImages(canv)
 
 	def drawImages(self, canvas):
@@ -70,6 +73,10 @@ class WheelMenu(object):
 		canvas.create_image(self.xloc-WHEEL_SIDE/2 + 30, self.yloc, image=self.images[Action.IMAGE])
 		canvas.create_image(self.xloc+WHEEL_SIDE/2 - 30, self.yloc, image=self.images[Action.SHAPE])
 		canvas.create_image(self.xloc, self.yloc-WHEEL_SIDE/2 + 30, image=self.images[Action.TEXT])
+		canvas.create_image(self.xloc, self.yloc-WHEEL_SIDE/2 - 30, image=self.images[Action.PAINT])
+
+	def changeColor (self, color):
+		self.color = color
 
 	def clearWheel (self, canv):
 		if self.TR:

@@ -3,16 +3,18 @@
 from Tkinter import *
 import tkFont
 from wheel_menu_framework import *
+from color_wheel_framework import *
+import math
 
 root = Tk()
 wheel = WheelMenu(0,0)
+colorwheel = ColorWheel(500,500)
 
 
 def point(event):
-	wheel.clearWheel(c)
-	wheel.changeLoc(event.x, event.y)
+	colorwheel.clearWheel(c)
 	#wheel.drawWheel(c)
-	wheel.highlightSide(c,180)
+	print colorwheel.getColor(c,event.x, event.y)
 
 c = Canvas(root, bg="white", width=1000, height= 1000)
 
@@ -20,9 +22,7 @@ c.configure(cursor="crosshair")
 
 c.pack()
 
-
 texttest = c.create_text(100,100, text = "hello")
-print tkFont.families()
 
 c.bind("<Button-1>", point)
 
