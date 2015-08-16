@@ -11,10 +11,14 @@ SCREEN_WIDTH = 1150
 SCREEN_HEIGHT = 600
 
 NUM_COLUMNS = 16
-CELL_HEIGHT = SCREEN_WIDTH/NUM_COLUMNS
+CELL_DIMN = SCREEN_WIDTH/NUM_COLUMNS
 GRID_COLOR = "grey"
 GRID_WIDTH = 1.5
 GRID_PADDING = 0
+
+def snapPoint((x, y)):
+
+	return (x, y)
 
 def getDegreesFromDirection(direction):
 	angle = None
@@ -32,6 +36,7 @@ class Objects(object):
 	"""Objects that will need to be rendered"""
 	def __init__(self):
 		self.data = []
+		self.ui_data = []
 		self.cursors = []
 		self.avg_location = None
 		self.actionText = ""
@@ -39,29 +44,45 @@ class Objects(object):
 		self.context_menu = None
 		self.bestdirection = None
 		self.grid_visible = False
+		self.boxselection = [None, None]
 
 	def addObject(self, obj):
 		self.data.append(obj)
 
 	def undo(self):
+		# pop the previous object, save to temp storage and re-render
 		print("UNIMPLEMENTED")
 
 	def redo(self):
+		# If element exists in temp storage, add to object queue and re-render
 		print("UNIMPLEMENTED")
 
 class Circle(object):
 	"""docstring for Circle"""
-	def __init__(self, (x, y), radius = 5):
+	def __init__(self, (x, y), radius = 5, color="darkgrey"):
 		super(Circle, self).__init__()
 		self.x = x
 		self.y = y
-		
+		self.color = color
 		self.radius = radius
 
 	def render(self, canvas):
 		#print("Circle!")
 		# emitter.emit('circle')
-		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill="darkgrey", outline="darkgrey")
+		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.color, outline=self.color)
+		
+class Line(object):
+	"""docstring for Circle"""
+	def __init__(self, (x, y), (x2, y2), color="#FF0066"):
+		super(Line, self).__init__()
+		self.x = x
+		self.y = y
+		self.x2 = x2
+		self.y2 = y2
+		self.color = color
+
+	def render(self, canvas):
+		canvas.create_line(self.x, self.y, self.x2, self.y2, fill=self.color, width=2)
 		
 
 class SenselEventLoop(SenselGestureHandler):
@@ -87,6 +108,27 @@ class SenselEventLoop(SenselGestureHandler):
 				arg.actionText = ""
 				arg.context_menu = None
 				arg.grid_visible = True
+		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
+			arg.ui_data = []
+			# Check if the first point has not been picked yet
+			second_point = gesture.avg_location
+			if(arg.boxselection[0] == None):
+				# Set anchor at nearest snap point
+				anchor_point = snapPoint(gesture.avg_location)
+				arg.boxselection[0] = anchor_point
+			# Calculate the second snap point
+			anchor_point = snapPoint(gesture.avg_location)
+			arg.boxselection[1] = anchor_point
+			# Draw line to current position from snap point	to user or to final snap
+			arg.ui_data.append(Line(arg.boxselection[0], (arg.boxselection[1][0], arg.boxselection[0][1])))
+			arg.ui_data.append(Line(arg.boxselection[0], (arg.boxselection[0][0], arg.boxselection[1][1])))
+			arg.ui_data.append(Line((arg.boxselection[1][0], arg.boxselection[0][1]), arg.boxselection[1]))
+			arg.ui_data.append(Line((arg.boxselection[0][0], arg.boxselection[1][1]), arg.boxselection[1]))
+			
+			arg.ui_data.append(Circle(arg.boxselection[0], color="#003300"))
+			arg.ui_data.append(Circle(second_point, color="#003300"))
+
+
 		if(len(gesture.xy_contacts) > 0):
 			if(show_cursors):
 				for c in gesture.xy_contacts:
@@ -105,7 +147,6 @@ class SenselEventLoop(SenselGestureHandler):
 				elif(gesture.bestdirection == Direction.UP):
 					arg.redo()
 					arg.actionText = "REDO"
-		
 
 class SenselWorkerThread(threading.Thread):
 	"""docstring for SenselWorkerThread"""
@@ -138,7 +179,7 @@ class App(object):
 
 	def showGrid(self):
 		# Draw Horizontal Lines
-		for y in range(-GRID_PADDING, SCREEN_HEIGHT + 2*GRID_PADDING, CELL_HEIGHT):
+		for y in range(-GRID_PADDING, SCREEN_HEIGHT + 2*GRID_PADDING, CELL_DIMN):
 			line_id = self.canvas.create_line(0, y, SCREEN_WIDTH, y, fill=GRID_COLOR, width=GRID_WIDTH)
 			#self.objects.grid_ids.append(line_id)
 		# Draw Vertical Lines
@@ -154,14 +195,16 @@ class App(object):
 
 		self.canvas.delete("all")
 
-		# Render or hide grid if necessary
+		# Render the grid
 		if(self.objects.grid_visible):
 			self.showGrid()
-		# elif(not self.objects.grid_visible and len(self.objects.grid_ids) > 0):
-		# 	hideGrid()
 
-		#print(self.objects.data)
+		# Render created objects
 		for o in self.objects.data:
+			o.render(self.canvas)
+
+		# Render UI Data
+		for o in self.objects.ui_data:
 			o.render(self.canvas)
 
 		# Draw the action text
