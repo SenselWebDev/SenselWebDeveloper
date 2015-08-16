@@ -109,6 +109,12 @@ class Shape(object):
 			return self.uid == other.uid
 		return False
 
+	def changeColor (self, newColor):
+		self.color = newColor
+
+	def changeFillColor (self, newFillColor):
+		self.fillcolor = newFillColor
+
 class Circle(Shape):
 	"""docstring for Circle"""
 	def __init__(self, (x, y), radius = 5, color="darkgrey", fillcolor=None):
@@ -124,7 +130,9 @@ class Circle(Shape):
 		#print("Circle!")
 		# emitter.emit('circle')
 		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillcolor, outline=self.color)
-		
+	
+	
+
 class Rectangle(Shape):
 	"""docstring for Rectangle"""
 	def __init__(self, (x, y), (x2, y2), color="#666", fillcolor=None, width=3.5):
