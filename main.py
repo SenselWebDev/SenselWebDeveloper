@@ -3,7 +3,7 @@ from lib.SenselGestureFramework.sensel_framework_simple import *
 from Tkinter import *
 from wheel_menu_framework import *
 import threading
-import math *
+from math import *
 # from pymitter import EventEmitter
 
 RENDER_DELAY = 1
@@ -17,14 +17,15 @@ GRID_COLOR = "grey"
 GRID_WIDTH = 1.5
 GRID_PADDING = 0
 
-def snapLoc (xloc, yloc):
-	newX = math.Round(xLoc/NUM_COLUMNS)*NUM_COLUMNS
-	newY = math.Round(yLoc/NUM_COLUMNS)*NUM_COLUMNS
+def snapLoc ((x, y)):
+	newX = round(x/CELL_DIMN)*CELL_DIMN
+	newY = round(y/CELL_DIMN)*CELL_DIMN
+	print("Snapping " + str((x, y)) + " to " + str((newX, newY)))
 	return (newX, newY)
 
 def snapToGrid (xloc, yloc):
-	gridCol = math.Round(xLoc/NUM_COLUMNS)
-	gridRow = math.Round(yLoc/NUM_COLUMNS)
+	gridCol = round(xloc/NUM_COLUMNS)
+	gridRow = round(yloc/NUM_COLUMNS)
 	return (gridRow, gridCol)
 
 def getDegreesFromDirection(direction):
@@ -47,6 +48,7 @@ class Objects(object):
 		self.cursors = []
 		self.avg_location = None
 		self.actionText = ""
+		self.imageType = None
 		#self.grid_ids = []
 		self.context_menu = None
 		self.bestdirection = None
@@ -66,20 +68,36 @@ class Objects(object):
 
 class Circle(object):
 	"""docstring for Circle"""
-	def __init__(self, (x, y), radius = 5, color="darkgrey"):
+	def __init__(self, (x, y), radius = 5, color="darkgrey", fillcolor=None):
 		super(Circle, self).__init__()
 		self.x = x
 		self.y = y
 		self.color = color
 		self.radius = radius
+		self.fillcolor = fillcolor if fillcolor else color
 
 	def render(self, canvas):
 		#print("Circle!")
 		# emitter.emit('circle')
-		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.color, outline=self.color)
+		canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.fillcolor, outline=self.color)
 		
+class Rectangle(object):
+	"""docstring for Rectangle"""
+	def __init__(self, (x, y), (x2, y2), color="#666", fillcolor=None, width=3.5):
+		super(Rectangle, self).__init__()
+		self.x = x
+		self.y = y
+		self.x2 = x2
+		self.y2 = y2
+		self.color = color
+		self.fillcolor = fillcolor if fillcolor else color
+		self.width = 3.5
+
+	def render(self, canvas):
+		canvas.create_rectangle(self.x, self.y, self.x2, self.y2, fill=self.fillcolor, outline=self.color, width=self.width)
+
 class Line(object):
-	"""docstring for Circle"""
+	"""docstring for Line"""
 	def __init__(self, (x, y), (x2, y2), color="#FF0066"):
 		super(Line, self).__init__()
 		self.x = x
@@ -89,7 +107,7 @@ class Line(object):
 		self.color = color
 
 	def render(self, canvas):
-		canvas.create_line(self.x, self.y, self.x2, self.y2, fill=self.color, width=2)
+		canvas.create_line(self.x, self.y, self.x2, self.y2, fill=self.color, width=3.5)
 		
 
 class SenselEventLoop(SenselGestureHandler):
@@ -102,6 +120,8 @@ class SenselEventLoop(SenselGestureHandler):
 		# Draw the cursor
 		arg.cursors = []
 		show_cursors = True
+
+		# Context Menu Trigger
 		if(gesture.contact_points == 2 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
 			#print("possible trigger")
 			if(not gesture.state == GestureState.ENDED):
@@ -115,27 +135,49 @@ class SenselEventLoop(SenselGestureHandler):
 				arg.actionText = ""
 				arg.context_menu = None
 				arg.grid_visible = True
+				arg.imageType = convertDirectionToAction(gesture.bestdirection)
+
+		# Box Drawing Trigger
 		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
 			arg.ui_data = []
 			# Check if the first point has not been picked yet
 			second_point = gesture.avg_location
 			if(arg.boxselection[0] == None):
 				# Set anchor at nearest snap point
-				anchor_point = snapPoint(gesture.avg_location)
+				anchor_point = snapLoc(gesture.avg_location)
 				arg.boxselection[0] = anchor_point
 			# Calculate the second snap point
-			anchor_point = snapPoint(gesture.avg_location)
+			anchor_point = snapLoc(gesture.avg_location)
 			arg.boxselection[1] = anchor_point
-			# Draw line to current position from snap point	to user or to final snap
-			arg.ui_data.append(Line(arg.boxselection[0], (arg.boxselection[1][0], arg.boxselection[0][1])))
-			arg.ui_data.append(Line(arg.boxselection[0], (arg.boxselection[0][0], arg.boxselection[1][1])))
-			arg.ui_data.append(Line((arg.boxselection[1][0], arg.boxselection[0][1]), arg.boxselection[1]))
-			arg.ui_data.append(Line((arg.boxselection[0][0], arg.boxselection[1][1]), arg.boxselection[1]))
-			
-			arg.ui_data.append(Circle(arg.boxselection[0], color="#003300"))
-			arg.ui_data.append(Circle(second_point, color="#003300"))
 
+			if(gesture.state == GestureState.ENDED):
+				# Draw the rectangle at the box selection
+				rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
+				arg.data.append(rect)
+				# Trigger Individual Action Menu Item events
+				if(arg.imageType == Action.SHAPE):
+					# No necessary code here
+					pass
+				elif(arg.imageType == Action.TEXT):
+					# Begin listening for keyboard input, write it into a label
+					
+					pass
+				elif(arg.imageType == Action.IMAGE):
+					# Similar to text, open a prompt and fetch image and display
+					pass
 
+				arg.grid_visible = False # Toggle the grid to hide next time through the render function
+				arg.imageType = None
+				arg.boxselection = [None, None]
+			else:
+				arg.ui_data.append(Rectangle(arg.boxselection[0], arg.boxselection[1], fillcolor="#666"))
+				
+				arg.ui_data.append(Circle(arg.boxselection[0], color="#CAE5FC", radius=8, fillcolor="white"))
+				arg.ui_data.append(Circle(arg.boxselection[0], color="#91C1FC"))
+				arg.ui_data.append(Circle(arg.boxselection[1], color="#CAE5FC", radius=8, fillcolor="white"))
+				arg.ui_data.append(Circle(arg.boxselection[1], color="#91C1FC"))
+
+		# Cursor Trigger
 		if(len(gesture.xy_contacts) > 0):
 			if(show_cursors):
 				for c in gesture.xy_contacts:
@@ -184,6 +226,8 @@ class App(object):
 
 		self.wheel = None
 
+		self.images = getImages()
+
 	def showGrid(self):
 		# Draw Horizontal Lines
 		for y in range(-GRID_PADDING, SCREEN_HEIGHT + 2*GRID_PADDING, CELL_DIMN):
@@ -199,7 +243,6 @@ class App(object):
 			self.canvas.delete(gridline_id)
 
 	def render(self):
-
 		self.canvas.delete("all")
 
 		# Render the grid
@@ -213,6 +256,11 @@ class App(object):
 		# Render UI Data
 		for o in self.objects.ui_data:
 			o.render(self.canvas)
+
+		# Draw the Image
+		imageType = self.objects.imageType
+		if(imageType and imageType in self.images.keys()):
+			self.canvas.create_image(35, SCREEN_HEIGHT - 40, image=self.images[imageType])
 
 		# Draw the action text
 		actionText = self.objects.actionText
@@ -258,10 +306,7 @@ if __name__ == '__main__':
 	app = App(objects)
 
 	app.root.mainloop()
-
-
-
-
-
 	
+
+
 
