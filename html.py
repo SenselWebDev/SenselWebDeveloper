@@ -32,6 +32,7 @@ def get_css_properties(elements):
 		property += 'grid-row: ' + str(element.position[0][1]) + '/' + str(element.position[1][1]) + ';'
 		if element.state == 'txt' or element.state == 'shape':
 			property += 'background: ' + element.color + ';'
+			property += 'text-align: center;'
 		property += '} '
 
 	return property
