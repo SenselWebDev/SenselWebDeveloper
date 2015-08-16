@@ -261,9 +261,9 @@ class SenselEventLoop(SenselGestureHandler):
 			else:
 				arg.actionText = ""
 				arg.context_menu = None
-				if(gesture.gesture_type == GestureType.PAN):
-					arg.grid_visible = True
-					arg.imageType = convertDirectionToAction(gesture.bestdirection)
+				#if(gesture.gesture_type == GestureType.PAN):
+				arg.grid_visible = True
+				arg.imageType = convertDirectionToAction(gesture.bestdirection)
 
 		# Box Drawing Trigger
 		if(arg.grid_visible and gesture.contact_points == 1 and (gesture.weight_class == WeightClass.MEDIUM or gesture.weight_class == WeightClass.HEAVY)):
