@@ -162,7 +162,7 @@ class Rectangle(Shape):
 		canvas.create_rectangle(self.x, self.y, self.x2, self.y2, fill=self.fillcolor, outline=self.color, width=self.width)
 	
 	def getElement(self):
-		elem = Element("shape" + str(self.uid), "shape", [(self.x, self.y), (self.x2, self.y2)], None, self.fillcolor)
+		elem = Element("shape" + str(self.uid), "shape", [snapToGrid(self.x, self.y), snapToGrid(self.x2, self.y2)], None, self.fillcolor)
 		return elem
 
 class Line(Shape):
@@ -199,7 +199,7 @@ class Image(Shape):
 		canvas.create_image(self.x + (self.x2 - self.x)/2, self.y + (self.y2-self.y)/2, image=self.image)
 
 	def getElement(self):
-		elem = Element("img" + str(self.uid), "img", [(self.x, self.y), (self.x2, self.y2)], self.url, None)
+		elem = Element("img" + str(self.uid), "img", [snapToGrid(self.x, self.y), snapToGrid(self.x2, self.y2)], self.url, None)
 		return elem
 
 class TextBox(Shape):
@@ -233,13 +233,14 @@ class TextBox(Shape):
 		canvas.itemconfig(self.id, fill=self.textcolor)
 
 	def getElement(self):
-		elem = Element("txt" + str(self.uid), "txt", [(self.x, self.y), (self.x2, self.y2)], self.text, self.textcolor)
+		elem = Element("txt" + str(self.uid), "txt", [snapToGrid(self.x, self.y), snapToGrid(self.x2, self.y2)], self.text, self.textcolor)
 		return elem
 
 class SenselEventLoop(SenselGestureHandler):
 	"""docstring for SenselEventLoop"""
 	def __init__(self, arg):
 		super(SenselEventLoop, self).__init__(arg)
+		self.deployed = False
 
 	def gestureEvent(self, gesture, arg):
 		#if(gesture.weight_class == WeightClass.LIGHT):
@@ -278,22 +279,23 @@ class SenselEventLoop(SenselGestureHandler):
 
 			if(gesture.state == GestureState.ENDED):
 				# Trigger Individual Action Menu Item events
-				if(arg.imageType == Action.SHAPE):
-					# Draw the rectangle at the box selection
-					rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
-					arg.data.append(rect)
-					pass
-				elif(arg.imageType == Action.TEXT):
-					# Begin listening for keyboard input, write it into a label
-					tb = TextBox(arg.boxselection[0], arg.boxselection[1])
-					arg.data.append(tb)
-					arg.selected_tb = tb
+				if(not arg.boxselection[0][0] == arg.boxselection[1][0] and not arg.boxselection[0][1] == arg.boxselection[1][1]):
+					if(arg.imageType == Action.SHAPE):
+						# Draw the rectangle at the box selection
+						rect = Rectangle(arg.boxselection[0], arg.boxselection[1])
+						arg.data.append(rect)
 
-				elif(arg.imageType == Action.IMAGE):
-					# Similar to text, open a prompt and fetch image and display
-					tb = TextBox(arg.boxselection[0], arg.boxselection[1], "Search Images..", True)
-					arg.data.append(tb) # Will swap with the image later
-					arg.selected_tb = tb
+					elif(arg.imageType == Action.TEXT):
+						# Begin listening for keyboard input, write it into a label
+						tb = TextBox(arg.boxselection[0], arg.boxselection[1])
+						arg.data.append(tb)
+						arg.selected_tb = tb
+
+					elif(arg.imageType == Action.IMAGE):
+						# Similar to text, open a prompt and fetch image and display
+						tb = TextBox(arg.boxselection[0], arg.boxselection[1], "Search Images..", True)
+						arg.data.append(tb) # Will swap with the image later
+						arg.selected_tb = tb
 
 				arg.grid_visible = False # Toggle the grid to hide next time through the render function
 				arg.imageType = None
@@ -334,12 +336,15 @@ class SenselEventLoop(SenselGestureHandler):
 
 		# Deploy Trigger
 		if(gesture.contact_points >= 6):
-			print("DEPLOYING!")
-			elements = arg.getElements()
-			path = "/Users/bgm9103/Desktop/index.html"
-			grid_size = 94
-			convertHTML(elements, grid_size, path)
-			# On completion, push html file to AWS
+			if(not self.deployed):
+				print("DEPLOYING!")
+				elements = arg.getElements()
+				path = "~/index.html"
+				grid_size = 94
+				convertHTML(elements, grid_size, path)
+				# On completion, push html file to AWS
+				
+				self.deployed = True
 
 class SenselWorkerThread(threading.Thread):
 	"""docstring for SenselWorkerThread"""
